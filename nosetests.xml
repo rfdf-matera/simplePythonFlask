@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?><testsuite name="nosetests" tests="2" errors="0" failures="0" skip="0"><testcase classname="test_users.AllTests" name="test_user_can_loging" time="0.076"><system-out><![CDATA[devops
+]]></system-out></testcase><testcase classname="test_users.AllTests" name="test_user_can_register" time="0.009"></testcase></testsuite>
