@@ -16,7 +16,7 @@ pipeline {
                 sh 'sleep 10'
 
                 sh 'docker exec -ti teste nosetests --with-xunit --with-coverage --cover-package=project test_users.py'
-                sh 'docker cp teste:/courseCatalog/nosetests.xlm .''
+                sh '''docker cp teste:/courseCatalog/nosetests.xlm .'''
             }
         }
     }
