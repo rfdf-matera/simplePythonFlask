@@ -24,3 +24,12 @@ jobs:
             - name: docker-build
               # o GITHUB_SHA é utilizado para identificar de forma unica
               run: docker build . --file Dockerfile --tag $IMAGE_NAME:${GITHUB_SHA}
+
+            - name: Start Container
+              run: docker run --rm -tdi --name unit_test_app-${GITHUB_SHA} $IMAGE_NAME:${GITHUB_SHA}
+            
+            - name: Run Tests in the Image
+              run: docker exec -t unit_test_app-${GITHUB_SHA} nosetests --with-xunit --with-coverage --cover-package=project test_users.py
+              
+            - name: Copy Test Results
+              run: docker cp unit_test_app-${GITHUB_SHA}:/courseCatalog/nosetests.xml .
