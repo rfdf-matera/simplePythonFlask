@@ -6,10 +6,21 @@ on:
     pull_request:
         branches: [ "master" ]
 
+env:
+    IMAGE_NAME: ci-cd-demo
+
 jobs:
     ci-cd:
         runs-on: ubuntu-latest
+
+        #Para o JUnit escrever no pull_request
+        permissions:
+            contents: read
+            issues: read
+            checks: write
+            pull-requests: write
         steps:
             - uses: actions/checkout@v3
             - name: docker-build
-              run: docker build -t teste .
+              # o GITHUB_SHA é utilizado para identificar de forma unica
+              run: docker build . --file Dockerfile --tag $IMAGE_NAME:${GITHUB_SHA}
