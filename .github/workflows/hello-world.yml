@@ -13,7 +13,7 @@ jobs:
     ci-cd:
         runs-on: ubuntu-latest
 
-        #Para o JUnit escrever no pull_request
+        #Permissao para que a action da linha 38 funcione, pois após o teste a action fará um pull_request do test_result
         permissions:
             contents: read
             issues: read
@@ -33,3 +33,10 @@ jobs:
               
             - name: Copy Test Results
               run: docker cp unit_test_app-${GITHUB_SHA}:/courseCatalog/nosetests.xml .
+
+            - name: Publish Test Results
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              if: always()
+              with:
+                  files: |
+                      *.xml
