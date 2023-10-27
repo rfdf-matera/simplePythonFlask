@@ -1,0 +1,63 @@
+name: 'Hello World'
+
+on:
+    push:
+        branches: [ "master" ]
+    pull_request:
+        branches: [ "master" ]
+
+env:
+    IMAGE_NAME: ci-cd-demo
+
+jobs:
+    ci-cd:
+        runs-on: ubuntu-latest
+
+        #Permissao para que a action da linha 38 funcione, pois após o teste a action fará um pull_request do test_result
+        permissions:
+            contents: read
+            issues: read
+            checks: write
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v3
+            - name: docker-build
+              # o GITHUB_SHA é utilizado para identificar de forma unica
+              run: docker build . --file Dockerfile --tag $IMAGE_NAME:${GITHUB_SHA}
+
+            - name: Start Container
+              run: docker run --rm -tdi --name unit_test_app-${GITHUB_SHA} $IMAGE_NAME:${GITHUB_SHA}
+            
+            - name: Run Tests in the Image
+              run: docker exec -t unit_test_app-${GITHUB_SHA} nosetests --with-xunit --with-coverage --cover-package=project test_users.py
+              
+            - name: Copy Test Results
+              run: docker cp unit_test_app-${GITHUB_SHA}:/courseCatalog/nosetests.xml .
+
+            - name: Publish Test Results
+              uses: EnricoMi/publish-unit-test-result-action@v2
+              if: always()
+              with:
+                  files: |
+                      *.xml
+
+            - name: Log in to registry
+              # This is where you will update the personal access token to TOKEN
+              run: echo "${{ secrets.TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+            - name: Push image
+              run: |
+                IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+                # Change all uppercase to lowercase
+                IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+                # Strip git ref prefix from version
+                VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+                # Strip "v" prefix from tag name
+                [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^
+                v//')
+                # Use Docker `latest` tag convention
+                [ "$VERSION" == "main" ] && VERSION=latest
+                echo IMAGE_ID=$IMAGE_ID
+                echo VERSION=$VERSION
+                docker tag $IMAGE_NAME:${GITHUB_SHA} $IMAGE_ID:$VERSION
+                docker push $IMAGE_ID:$VERSION
